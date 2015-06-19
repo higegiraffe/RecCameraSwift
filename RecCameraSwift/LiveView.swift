@@ -36,6 +36,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         if (camera.connected) {
             do {
                 try camera.changeRunMode(OLYCameraRunModeRecording)
+                try camera.changeLiveViewSize(OLYCameraLiveViewSizeXGA)
             } catch _ {
             }
             do {
