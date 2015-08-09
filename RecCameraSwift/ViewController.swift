@@ -32,9 +32,9 @@ class ViewController: UIViewController {
     }
     
     func connectButtonEnable() {
-        let status : Int = appDelegate.reachabilityForLocalWiFi.currentReachabilityStatus().rawValue
+        let status : Int = appDelegate.reachabilityForLocalWiFi.currentReachabilityStatus().value
         
-        if (status == ReachableViaWiFi.rawValue) {
+        if (status == ReachableViaWiFi.value) {
             connectButton.enabled = true
         } else {
             connectButton.enabled = false

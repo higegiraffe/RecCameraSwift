@@ -28,6 +28,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         camera.liveViewDelegate = self
         camera.recordingSupportsDelegate = self
 
+/*
         do {
             try camera.connect()
         } catch _ {
@@ -49,6 +50,19 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             //let version = inquire.objectForKey(OLYCameraHardwareInformationCameraFirmwareVersionKey) as? String
             //infomation.text = modelname! + " Ver." + version!
         }
+*/
+        camera.connect(OLYCameraConnectionTypeWiFi, error: nil)
+        
+        if (camera.connected) {
+            camera.changeRunMode(OLYCameraRunModeRecording, error: nil)
+            camera.changeLiveViewSize(OLYCameraLiveViewSizeXGA, error: nil)
+            camera.setCameraPropertyValue("TAKEMODE", value: "<TAKEMODE/P>", error: nil)
+            
+            //let inquire = camera.inquireHardwareInformation(nil) as NSDictionary
+            //let modelname = inquire.objectForKey(OLYCameraHardwareInformationCameraModelNameKey) as? String
+            //let version = inquire.objectForKey(OLYCameraHardwareInformationCameraFirmwareVersionKey) as? String
+            //infomation.text = modelname! + " Ver." + version!
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -60,10 +74,14 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         super.viewWillDisappear(animated)
         
         let camera = AppDelegate.sharedCamera
+/*
         do {
             try camera.disconnectWithPowerOff(false)
         } catch _ {
         }
+*/
+        camera.disconnectWithPowerOff(false, error: nil)
+        
     }
     
     // MARK: - Button Action
@@ -85,11 +103,14 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         }
         
         let camera = AppDelegate.sharedCamera
-        
+/*
         do {
             try camera.setCameraPropertyValue("EXPREV", value: "<EXPREV/" + (value as String) + ">")
         } catch _ {
         }
+*/
+        camera.setCameraPropertyValue("EXPREV", value: "<EXPREV/" + (value as String) + ">", error: nil)
+        
     }
     
     // MARK: - LiveView Update
