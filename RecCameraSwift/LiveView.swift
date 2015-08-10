@@ -14,7 +14,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
     @IBOutlet weak var infomation: UILabel!
     
     //AppDelegate instance
-    var appDelegate:AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+    var appDelegate: AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,6 +27,9 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         let camera = AppDelegate.sharedCamera
         camera.liveViewDelegate = self
         camera.recordingSupportsDelegate = self
+        
+//        let detface = detf()
+//        detf.detfnc()
 
 /*
         do {
@@ -57,6 +60,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             camera.changeRunMode(OLYCameraRunModeRecording, error: nil)
             camera.changeLiveViewSize(OLYCameraLiveViewSizeXGA, error: nil)
             camera.setCameraPropertyValue("TAKEMODE", value: "<TAKEMODE/P>", error: nil)
+            
+            detf.detfnc()
             
             //let inquire = camera.inquireHardwareInformation(nil) as NSDictionary
             //let modelname = inquire.objectForKey(OLYCameraHardwareInformationCameraModelNameKey) as? String
