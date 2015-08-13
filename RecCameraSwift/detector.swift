@@ -13,8 +13,32 @@ class detector {
     
     class func recognizeFace(image: UIImage) -> (faces: NSArray , transform: CGAffineTransform) {
         
+        var orientation = 0
+        switch(image.imageOrientation) {
+        case UIImageOrientation.Up:
+            orientation = 1
+        case UIImageOrientation.Down:
+            orientation = 3
+        case UIImageOrientation.Left:
+            orientation = 8
+        case UIImageOrientation.Right:
+            orientation = 6
+        case UIImageOrientation.UpMirrored:
+            orientation = 2
+        case UIImageOrientation.DownMirrored:
+            orientation = 4
+        case UIImageOrientation.LeftMirrored:
+            orientation = 5
+        case UIImageOrientation.RightMirrored:
+            orientation = 7
+        default:
+            break
+            
+        }
+        
+        
         // NSDictionary型のoptionを生成。顔認識の精度を追加する.
-        var options : NSDictionary = [CIDetectorSmile : true, CIDetectorEyeBlink : true]
+        var options : NSDictionary = [CIDetectorSmile : true, CIDetectorEyeBlink : true, CIDetectorImageOrientation :orientation]
         
         // CIDetectorを生成。顔認識をするのでTypeはCIDetectorTypeFace.
         let detector : CIDetector = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
@@ -30,21 +54,6 @@ class detector {
         //       transform = CGAffineTransformTranslate(transform, 0, -self.imageView.bounds.size.height)
         transform = CGAffineTransformTranslate(transform, 0, -UIScreen.mainScreen().bounds.size.height)
         
-        /*
-        // 検出された顔のデータをCIFaceFeatureで処理.
-        var feature : CIFaceFeature = CIFaceFeature()
-        for feature in faces {
-        
-        // 座標変換.
-        let faceRect : CGRect = CGRectApplyAffineTransform(feature.bounds, transform)
-        
-        // 画像の顔の周りを線で囲うUIViewを生成.
-        var faceOutline = UIView(frame: faceRect)
-        faceOutline.layer.borderWidth = 1
-        faceOutline.layer.borderColor = UIColor.redColor().CGColor
-        self.imageView.addSubview(faceOutline)
-        }
-        */
         return (faces,transform)
         
     }
