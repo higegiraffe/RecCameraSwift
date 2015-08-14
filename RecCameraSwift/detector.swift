@@ -46,7 +46,7 @@ class detector {
         
         // detectorで認識した顔のデータを入れておくNSArray.
         var faces : NSArray = detector.featuresInImage(outputImage, options: options as [NSObject : AnyObject]) as! [CIFeature]
-
+        
         // UIKitは画面左上に原点があるが、CoreImageは画面左下に原点があるのでそれを揃えなくてはならない.
         // CoreImageとUIKitの原点を画面左上に統一する処理.
         var transform : CGAffineTransform = CGAffineTransformMakeScale(1, -1)

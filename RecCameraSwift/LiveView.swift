@@ -76,12 +76,18 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 //顔認識の状態表示
                 self.emojiLabel.text = "😊"
                 
+                NSNotificationCenter.defaultCenter().addObserverForName("WinkingNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+                    let camera = AppDelegate.sharedCamera
+                    camera.takePicture(nil, progressHandler: nil, completionHandler: nil, errorHandler: nil)
+                })
+/*
                 //ウインクでレリーズ
                     if (self.isWinking == true) {
                         let camera = AppDelegate.sharedCamera
                         camera.takePicture(nil, progressHandler: nil, completionHandler: nil, errorHandler: nil)
                     }
                     return
+*/
             })
             
             //非顔認識時の処理
@@ -258,21 +264,21 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 }
                 self.faceDetected = true
                 
-                for feature in detectFace.faces {
+                for feature in detectFace.faces as! [CIFaceFeature] {
                     var faceBounds : CGRect = feature.bounds
                     
-                    if ((feature.hasLeftEyePosition) != nil) {
+                    if (feature.hasLeftEyePosition) {
                         var leftEyePosition : CGPoint = feature.leftEyePosition
                     }
                     
-                    if ((feature.hasRightEyePosition) != nil) {
+                    if (feature.hasRightEyePosition) {
                         var rightEyePosition : CGPoint = feature.rightEyePosition
                     }
                 
-                    if ((feature.hasMouthPosition) != nil) {
+                    if (feature.hasMouthPosition) {
                         var mouthPosition : CGPoint = feature.mouthPosition
                     }
-                    if (((feature.leftEyeClosed) != nil) || ((feature.rightEyeClosed) != nil)) {
+                    if (feature.leftEyeClosed || feature.rightEyeClosed) {
                         if (self.onlyFireNotificatonOnStatusChange == true) {
                             if (self.isWinking == false) {
                                 self.notificationCenter.postNotification(self.WinkingNotification)
@@ -282,7 +288,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                         }
                         self.isWinking = true
                         
-                        if ((feature.leftEyeClosed) != nil) {
+                        if (feature.leftEyeClosed) {
                             if (self.onlyFireNotificatonOnStatusChange == true) {
                                 if (self.leftEyeClosed == false) {
                                     self.notificationCenter.postNotification(self.LeftEyeClosedNotification)
@@ -293,7 +299,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                             self.leftEyeClosed = true
                         }
                         
-                        if ((feature.rightEyeClosed) != nil) {
+                        if (feature.rightEyeClosed) {
                             if (self.onlyFireNotificatonOnStatusChange == true) {
                                 if (self.rightEyeClosed == false) {
                                     self.notificationCenter.postNotification(self.RightEyeClosedNotification)
@@ -304,7 +310,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                             self.rightEyeClosed = true
                         }
                         
-                        if (((feature.leftEyeClosed) != nil) && ((feature.rightEyeClosed) != nil )) {
+                        if (feature.leftEyeClosed && feature.rightEyeClosed) {
                             if (self.onlyFireNotificatonOnStatusChange == true) {
                                 if (self.isBlinking == false) {
                                     self.notificationCenter.postNotification(self.BlinkingNotification)
@@ -336,8 +342,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                         }
                         self.isBlinking = false
                         self.isWinking = false
-                        self.leftEyeClosed = false
-                        self.rightEyeClosed = false
+                        self.leftEyeClosed = feature.leftEyeClosed
+                        self.rightEyeClosed = feature.rightEyeClosed
                     }
                 }
             } else {
@@ -349,10 +355,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                     self.notificationCenter.postNotification(self.NoFaceDetectedNotification)
                 }
                 self.faceDetected = false
-                self.isBlinking = false
-                self.isWinking = false
-                self.leftEyeClosed = false
-                self.rightEyeClosed = false
+                
             }
 
 //        })
