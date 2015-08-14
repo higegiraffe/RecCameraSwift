@@ -69,7 +69,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             emojiLabel.font = UIFont.systemFontOfSize(50)
             emojiLabel.textAlignment = .Center
             self.view.addSubview(emojiLabel)
-            
+
+
             //顔認識時の処理
             NSNotificationCenter.defaultCenter().addObserverForName("FaceDetectedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
                 //顔認識の状態表示
@@ -87,6 +88,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             NSNotificationCenter.defaultCenter().addObserverForName("NoFaceDetectedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
                     self.emojiLabel.text = "💤"
             })
+
             
             //let inquire = camera.inquireHardwareInformation(nil) as NSDictionary
             //let modelname = inquire.objectForKey(OLYCameraHardwareInformationCameraModelNameKey) as? String
@@ -117,15 +119,19 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
     var myOutput : AVCaptureVideoDataOutput!
     
     func detectFaces() {
-        //secretViewの生成
-        initDisplay()
+        var q_global: dispatch_queue_t = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+        var q_main: dispatch_queue_t  = dispatch_get_main_queue()
         
-        // カメラを準備
-        if initCamera() {
-        // 撮影開始
-        mySession.startRunning()
-            
-        }
+        dispatch_async(q_global, {
+            //secretViewの生成
+            self.initDisplay()
+        
+            // カメラを準備
+            if self.initCamera() {
+            // 撮影開始
+            self.mySession.startRunning()
+            }
+        })
         
     }
         
@@ -205,7 +211,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         } else {
             return false
         }
-        
+
         // カメラの向きを合わせる
         for connection in myOutput.connections {
             if let conn = connection as? AVCaptureConnection {
@@ -214,33 +220,34 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 }
             }
         }
+
         
         return true
     }
-    
+ 
     // 毎フレーム実行される処理
     func captureOutput(captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, fromConnection connection: AVCaptureConnection!) {
 
-        var q_global: dispatch_queue_t = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-        var q_main: dispatch_queue_t  = dispatch_get_main_queue()
+//        var q_global: dispatch_queue_t = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+//        var q_main: dispatch_queue_t  = dispatch_get_main_queue()
         
-        dispatch_async(q_global, {
-            dispatch_async(q_main, {
-                
+//        dispatch_async(q_global, {
+//            dispatch_async(q_main, {
+/*
                 // UIImageへ変換して表示させる
                 //imageView.image = CameraUtil.imageFromSampleBuffer(sampleBuffer)
                 
                 return
             })
-            
+*/
             // UIImageへ変換
             let image = CameraUtil.imageFromSampleBuffer(sampleBuffer)
             
             // 顔認識
             let detectFace = detector.recognizeFace(image)
-                
-            // 検出された顔のデータをCIFaceFeatureで処理
             
+
+            // 検出された顔のデータをCIFaceFeatureで処理
             if (detectFace.faces.count != 0) {
                 if (self.onlyFireNotificatonOnStatusChange == true) {
                     if (self.faceDetected == false) {
@@ -329,8 +336,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                         }
                         self.isBlinking = false
                         self.isWinking = false
-                        self.leftEyeClosed = feature.leftEyeClosed
-                        self.rightEyeClosed = feature.rightEyeClosed
+                        self.leftEyeClosed = false
+                        self.rightEyeClosed = false
                     }
                 }
             } else {
@@ -342,9 +349,13 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                     self.notificationCenter.postNotification(self.NoFaceDetectedNotification)
                 }
                 self.faceDetected = false
+                self.isBlinking = false
+                self.isWinking = false
+                self.leftEyeClosed = false
+                self.rightEyeClosed = false
             }
-            
-        })
+
+//        })
         return
         
     }

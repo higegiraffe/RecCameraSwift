@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		9D443A7D1ADD1BFE007156B8 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 9D443A7C1ADD1BFE007156B8 /* Reachability.m */; };
-		9D75067B1B77026E00A122D2 /* detectFaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D75067A1B77026E00A122D2 /* detectFaces.swift */; };
 		9D75067D1B77081F00A122D2 /* CameraUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D75067C1B77081F00A122D2 /* CameraUtil.swift */; };
 		9D75067F1B770BBC00A122D2 /* detector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D75067E1B770BBC00A122D2 /* detector.swift */; };
 		9DC64F991ADAB1EC0037C313 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC64F981ADAB1EC0037C313 /* AppDelegate.swift */; };
@@ -34,7 +33,6 @@
 /* Begin PBXFileReference section */
 		9D443A7B1ADD1BFE007156B8 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		9D443A7C1ADD1BFE007156B8 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
-		9D75067A1B77026E00A122D2 /* detectFaces.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = detectFaces.swift; sourceTree = "<group>"; };
 		9D75067C1B77081F00A122D2 /* CameraUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraUtil.swift; sourceTree = "<group>"; };
 		9D75067E1B770BBC00A122D2 /* detector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = detector.swift; sourceTree = "<group>"; };
 		9DC64F931ADAB1EC0037C313 /* RecCameraSwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RecCameraSwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -99,7 +97,6 @@
 				9DC64F981ADAB1EC0037C313 /* AppDelegate.swift */,
 				9DC64F9A1ADAB1EC0037C313 /* ViewController.swift */,
 				9DC64FBE1ADABA6A0037C313 /* LiveView.swift */,
-				9D75067A1B77026E00A122D2 /* detectFaces.swift */,
 				9D75067E1B770BBC00A122D2 /* detector.swift */,
 				9D75067C1B77081F00A122D2 /* CameraUtil.swift */,
 				9DC64F9C1ADAB1EC0037C313 /* Main.storyboard */,
@@ -246,7 +243,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				9D75067D1B77081F00A122D2 /* CameraUtil.swift in Sources */,
-				9D75067B1B77026E00A122D2 /* detectFaces.swift in Sources */,
 				9D75067F1B770BBC00A122D2 /* detector.swift in Sources */,
 				9DC64FBF1ADABA6A0037C313 /* LiveView.swift in Sources */,
 				9DC64F9B1ADAB1EC0037C313 /* ViewController.swift in Sources */,
