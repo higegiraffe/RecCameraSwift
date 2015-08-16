@@ -19,6 +19,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
 
     //顔認識関連の定義
     var onlyFireNotificatonOnStatusChange : Bool = true
+    var LeftEyeClosedCount = 0
     var leftEyeClosed : Bool?
     var rightEyeClosed : Bool?
     var isWinking : Bool?
@@ -71,28 +72,41 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             self.view.addSubview(emojiLabel)
 
 
-            //顔認識時の処理
+            //顔認識表示の処理
             NSNotificationCenter.defaultCenter().addObserverForName("FaceDetectedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
                 //顔認識の状態表示
                 self.emojiLabel.text = "😊"
-                
-                NSNotificationCenter.defaultCenter().addObserverForName("WinkingNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
-                    let camera = AppDelegate.sharedCamera
-                    camera.takePicture(nil, progressHandler: nil, completionHandler: nil, errorHandler: nil)
                 })
-/*
-                //ウインクでレリーズ
-                    if (self.isWinking == true) {
-                        let camera = AppDelegate.sharedCamera
-                        camera.takePicture(nil, progressHandler: nil, completionHandler: nil, errorHandler: nil)
-                    }
-                    return
-*/
+            //非顔認識表示の処理
+            NSNotificationCenter.defaultCenter().addObserverForName("NoFaceDetectedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+                self.emojiLabel.text = "💤"
             })
             
-            //非顔認識時の処理
-            NSNotificationCenter.defaultCenter().addObserverForName("NoFaceDetectedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
-                    self.emojiLabel.text = "💤"
+            //LeftEyeClosedNotification通知時の処理
+            NSNotificationCenter.defaultCenter().addObserverForName("LeftEyeClosedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+                //LeftEyeClosedNotificationの通知回数カウント
+                self.LeftEyeClosedCount++   //self.LeftEyeClosedCount + 1
+                println(self.LeftEyeClosedCount)
+                
+                //ウインクでレリーズ
+                //通知２回来るとレリーズ
+                if (self.LeftEyeClosedCount == 2) {
+                    println("faceDetected =")
+                    println(self.faceDetected)
+                    println("isWinking =")
+                    println(self.isWinking)
+                        
+                    let camera = AppDelegate.sharedCamera
+                    println("takePicture")
+                    camera.takePicture(nil, progressHandler: nil, completionHandler: nil, errorHandler: nil)
+                }
+            })
+
+            //LeftEyeOpenNotification通知時の処理
+            NSNotificationCenter.defaultCenter().addObserverForName("LeftEyeOpenNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+                //LeftEyeClosedNotificationの通知回数カウントのリセット
+                self.LeftEyeClosedCount = 0
+                println(self.LeftEyeClosedCount)
             })
 
             
@@ -234,18 +248,6 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
     // 毎フレーム実行される処理
     func captureOutput(captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, fromConnection connection: AVCaptureConnection!) {
 
-//        var q_global: dispatch_queue_t = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-//        var q_main: dispatch_queue_t  = dispatch_get_main_queue()
-        
-//        dispatch_async(q_global, {
-//            dispatch_async(q_main, {
-/*
-                // UIImageへ変換して表示させる
-                //imageView.image = CameraUtil.imageFromSampleBuffer(sampleBuffer)
-                
-                return
-            })
-*/
             // UIImageへ変換
             let image = CameraUtil.imageFromSampleBuffer(sampleBuffer)
             
@@ -254,7 +256,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             
 
             // 検出された顔のデータをCIFaceFeatureで処理
-            if (detectFace.faces.count != 0) {
+            if (detectFace.faces.count != 0) { //顔認識ある場合
+                println("count =",detectFace.faces.count)
                 if (self.onlyFireNotificatonOnStatusChange == true) {
                     if (self.faceDetected == false) {
                         self.notificationCenter.postNotification(self.FaceDetectedNotification)
@@ -263,10 +266,10 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                     self.notificationCenter.postNotification(self.FaceDetectedNotification)
                 }
                 self.faceDetected = true
+                println("faceDetected true")
                 
                 for feature in detectFace.faces as! [CIFaceFeature] {
                     var faceBounds : CGRect = feature.bounds
-                    
                     if (feature.hasLeftEyePosition) {
                         var leftEyePosition : CGPoint = feature.leftEyePosition
                     }
@@ -278,7 +281,13 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                     if (feature.hasMouthPosition) {
                         var mouthPosition : CGPoint = feature.mouthPosition
                     }
-                    if (feature.leftEyeClosed || feature.rightEyeClosed) {
+                    
+                    if ((feature.leftEyeClosed == true) || (feature.rightEyeClosed == true)) { //目閉じがある場合
+                        println("feature.leftEyeClosed =")
+                        println(feature.leftEyeClosed)
+                        println("feature.rightEyeClosed =")
+                        println(feature.rightEyeClosed)
+                        
                         if (self.onlyFireNotificatonOnStatusChange == true) {
                             if (self.isWinking == false) {
                                 self.notificationCenter.postNotification(self.WinkingNotification)
@@ -287,19 +296,27 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                             self.notificationCenter.postNotification(self.WinkingNotification)
                         }
                         self.isWinking = true
+                        println("isWinking = true")
                         
-                        if (feature.leftEyeClosed) {
+                        if (feature.leftEyeClosed == true) {
                             if (self.onlyFireNotificatonOnStatusChange == true) {
                                 if (self.leftEyeClosed == false) {
+                                    self.notificationCenter.postNotification(self.LeftEyeClosedNotification)
+                                } else {
                                     self.notificationCenter.postNotification(self.LeftEyeClosedNotification)
                                 }
                             } else {
                                 self.notificationCenter.postNotification(self.LeftEyeClosedNotification)
                             }
                             self.leftEyeClosed = true
+                            println("leftEyeClosed = true")
+                        } else {
+                            self.leftEyeClosed = false
+                            println("leftEyeClosed = false")
+                            self.notificationCenter.postNotification(self.LeftEyeOpenNotification)
                         }
                         
-                        if (feature.rightEyeClosed) {
+                        if (feature.rightEyeClosed == true) {
                             if (self.onlyFireNotificatonOnStatusChange == true) {
                                 if (self.rightEyeClosed == false) {
                                     self.notificationCenter.postNotification(self.RightEyeClosedNotification)
@@ -308,9 +325,14 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                                 self.notificationCenter.postNotification(self.RightEyeClosedNotification)
                             }
                             self.rightEyeClosed = true
+                            println("rightEyeClosed = true")
+                        } else {
+                            self.rightEyeClosed = false
+                            println("rightEyeClosed = false")
+                            self.notificationCenter.postNotification(self.RightEyeOpenNotification)
                         }
                         
-                        if (feature.leftEyeClosed && feature.rightEyeClosed) {
+                        if ((feature.leftEyeClosed == true) && (feature.rightEyeClosed == true)) {
                             if (self.onlyFireNotificatonOnStatusChange == true) {
                                 if (self.isBlinking == false) {
                                     self.notificationCenter.postNotification(self.BlinkingNotification)
@@ -319,8 +341,9 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                                 self.notificationCenter.postNotification(self.BlinkingNotification)
                             }
                             self.isBlinking = true
+                            println("isBlinking = true")
                         }
-                    } else {
+                    } else { //目閉じがない場合
                         if (self.onlyFireNotificatonOnStatusChange == true) {
                             if (self.isBlinking == true) {
                                 self.notificationCenter.postNotification(self.NotBlinkingNotification)
@@ -342,11 +365,17 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                         }
                         self.isBlinking = false
                         self.isWinking = false
-                        self.leftEyeClosed = feature.leftEyeClosed
-                        self.rightEyeClosed = feature.rightEyeClosed
+                        self.leftEyeClosed = false
+                        self.rightEyeClosed = false
+                        println("isBlinking = false")
+                        println("isWinking = false")
+                        println("leftEyeClosed = false")
+                        println("rightEyeClosed = false")
+                        
                     }
                 }
-            } else {
+            } else { //顔認識ない場合
+                println("count =",detectFace.faces.count)
                 if (self.onlyFireNotificatonOnStatusChange == true) {
                     if (self.faceDetected == true) {
                         self.notificationCenter.postNotification(self.NoFaceDetectedNotification)
@@ -355,12 +384,16 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                     self.notificationCenter.postNotification(self.NoFaceDetectedNotification)
                 }
                 self.faceDetected = false
+                self.isBlinking = false
+                self.isWinking = false
+                self.leftEyeClosed = false
+                self.rightEyeClosed = false
+                println("isBlinking = false")
+                println("isWinking = false")
+                println("leftEyeClosed = false")
+                println("rightEyeClosed = false")
                 
             }
-
-//        })
-        return
-        
     }
     
     // MARK: - Button Action
