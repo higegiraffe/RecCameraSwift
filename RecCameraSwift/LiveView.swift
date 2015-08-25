@@ -19,7 +19,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
 
     //顔認識関連の定義
     var onlyFireNotificatonOnStatusChange : Bool = true
-    var LeftEyeClosedCount = 0
+    var RightEyeClosedCount = 0
     var leftEyeClosed : Bool?
     var rightEyeClosed : Bool?
     var isWinking : Bool?
@@ -39,6 +39,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
     let FaceDetectedNotification = NSNotification(name: "FaceDetectedNotification", object: nil)
     
     let emojiLabel : UILabel = UILabel(frame: UIScreen.mainScreen().bounds)
+    
+    var orientation = 0
     
     //AppDelegate instance
     var appDelegate: AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
@@ -68,7 +70,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             //顔認識の状態表示
             emojiLabel.text = "💤"
             emojiLabel.font = UIFont.systemFontOfSize(50)
-            emojiLabel.textAlignment = .Center
+            emojiLabel.textAlignment = .Left
             self.view.addSubview(emojiLabel)
 
 
@@ -82,15 +84,15 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 self.emojiLabel.text = "💤"
             })
             
-            //LeftEyeClosedNotification通知時の処理
-            NSNotificationCenter.defaultCenter().addObserverForName("LeftEyeClosedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
-                //LeftEyeClosedNotificationの通知回数カウント
-                self.LeftEyeClosedCount++   //self.LeftEyeClosedCount + 1
-                println(self.LeftEyeClosedCount)
+            //RightEyeClosedNotification通知時の処理
+            NSNotificationCenter.defaultCenter().addObserverForName("RightEyeClosedNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+                //RightEyeClosedNotificationの通知回数カウント
+                self.RightEyeClosedCount++   //self.LeftEyeClosedCount + 1
+                println(self.RightEyeClosedCount)
                 
                 //ウインクでレリーズ
-                //通知２回来るとレリーズ
-                if (self.LeftEyeClosedCount == 2) {
+                //通知3回来るとレリーズ
+                if (self.RightEyeClosedCount == 3) {
                     println("faceDetected =")
                     println(self.faceDetected)
                     println("isWinking =")
@@ -102,11 +104,11 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 }
             })
 
-            //LeftEyeOpenNotification通知時の処理
-            NSNotificationCenter.defaultCenter().addObserverForName("LeftEyeOpenNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
-                //LeftEyeClosedNotificationの通知回数カウントのリセット
-                self.LeftEyeClosedCount = 0
-                println(self.LeftEyeClosedCount)
+            //RightEyeOpenNotification通知時の処理
+            NSNotificationCenter.defaultCenter().addObserverForName("RightEyeOpenNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+                //RightEyeClosedNotificationの通知回数カウントのリセット
+                self.RightEyeClosedCount = 0
+                println(self.RightEyeClosedCount)
             })
 
             
@@ -129,6 +131,16 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
 
         camera.disconnectWithPowerOff(false, error: nil)
         
+        //カメラの停止とメモリ解放
+        self.mySession.stopRunning()
+        for output in self.mySession.outputs {
+            self.mySession.removeOutput(output as! AVCaptureOutput)
+        }
+        for input in self.mySession.inputs {
+            self.mySession.removeInput(input as! AVCaptureInput)
+        }
+        self.mySession = nil
+        
     }
     
     // セッション
@@ -148,6 +160,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         
             // カメラを準備
             if self.initCamera() {
+                
             // 撮影開始
             self.mySession.startRunning()
             }
@@ -210,7 +223,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 println("lock error: \(error.localizedDescription)")
                 return false
             } else {
-                myDevice.activeVideoMinFrameDuration = CMTimeMake(1, 15)
+                myDevice.activeVideoMinFrameDuration = CMTimeMake(1, 10)
                 myDevice.unlockForConfiguration()
             }
         }
@@ -233,15 +246,45 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
         }
 
         // カメラの向きを合わせる
+        if (UIDeviceOrientationIsLandscape(UIDevice.currentDevice().orientation)) {
+            println("landscape")
+        }
+        if (UIDeviceOrientationIsPortrait(UIDevice.currentDevice().orientation)) {
+            println("Portrait")
+        }
+        println("DeviceOrientation")
+        println(UIDevice.currentDevice().orientation)
+        
         for connection in myOutput.connections {
             if let conn = connection as? AVCaptureConnection {
                 if conn.supportsVideoOrientation {
-                    conn.videoOrientation = AVCaptureVideoOrientation.Portrait
+                    switch(UIDevice.currentDevice().orientation) {
+                    case UIDeviceOrientation.Portrait:
+                        println("Portrait")
+                        orientation = 2
+                        conn.videoOrientation = AVCaptureVideoOrientation.Portrait
+                    case UIDeviceOrientation.PortraitUpsideDown:
+                        println("PortraitUpsideDown")
+                        orientation = 4
+                        conn.videoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown
+                    case UIDeviceOrientation.LandscapeLeft:
+                        println("LandscapeLeft")
+                        orientation = 7
+                        //conn.videoOrientation = AVCaptureVideoOrientation.LandscapeLeft
+                        conn.videoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown
+                    case UIDeviceOrientation.LandscapeRight:
+                        println("LandscapeRight")
+                        orientation = 5
+                        //conn.videoOrientation = AVCaptureVideoOrientation.LandscapeRight
+                        conn.videoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown
+                    default:
+                        break
+                    }
+                    println("conn.videoOrientation")
+                    println(conn.videoOrientation)
                 }
             }
         }
-
-        
         return true
     }
  
@@ -252,9 +295,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             let image = CameraUtil.imageFromSampleBuffer(sampleBuffer)
             
             // 顔認識
-            let detectFace = detector.recognizeFace(image)
-            
-
+            let detectFace = detector.recognizeFace(image,orientation: orientation)
+        
             // 検出された顔のデータをCIFaceFeatureで処理
             if (detectFace.faces.count != 0) { //顔認識ある場合
                 println("count =",detectFace.faces.count)
@@ -319,6 +361,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                         if (feature.rightEyeClosed == true) {
                             if (self.onlyFireNotificatonOnStatusChange == true) {
                                 if (self.rightEyeClosed == false) {
+                                    self.notificationCenter.postNotification(self.RightEyeClosedNotification)
+                                } else {
                                     self.notificationCenter.postNotification(self.RightEyeClosedNotification)
                                 }
                             } else {
@@ -394,6 +438,34 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 println("rightEyeClosed = false")
                 
             }
+    }
+    
+    //デバイスの向きが変わった時
+    override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+        println("viewWillTransitionToSize")
+        var q_global: dispatch_queue_t = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+        var q_main: dispatch_queue_t  = dispatch_get_main_queue()
+        
+        dispatch_async(q_global, {
+            //カメラの停止とメモリ解放
+            self.mySession.stopRunning()
+            for output in self.mySession.outputs {
+                self.mySession.removeOutput(output as! AVCaptureOutput)
+            }
+            for input in self.mySession.inputs {
+                self.mySession.removeInput(input as! AVCaptureInput)
+            }
+            self.mySession = nil
+            println("カメラの停止とメモリ解放")
+            // カメラを準備
+            self.initCamera()
+            println("initCamera")
+            // 撮影開始
+            self.mySession.startRunning()
+            
+        })
+     super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
+    
     }
     
     // MARK: - Button Action
