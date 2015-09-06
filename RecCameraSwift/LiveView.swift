@@ -20,11 +20,13 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
     //顔認識関連の定義
     var onlyFireNotificatonOnStatusChange : Bool = true
     var RightEyeClosedCount = 0
+    var SmileingCount = 0
     var leftEyeClosed : Bool?
     var rightEyeClosed : Bool?
     var isWinking : Bool?
     var isBlinking : Bool?
     var faceDetected : Bool?
+    var isSmileing : Bool?
     
     let notificationCenter : NSNotificationCenter = NSNotificationCenter.defaultCenter()
     let LeftEyeClosedNotification = NSNotification(name: "LeftEyeClosedNotification", object: nil)
@@ -37,6 +39,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
     let NotBlinkingNotification = NSNotification(name: "NotBlinkingNotification", object: nil)
     let NoFaceDetectedNotification = NSNotification(name: "NoFaceDetectedNotification", object: nil)
     let FaceDetectedNotification = NSNotification(name: "FaceDetectedNotification", object: nil)
+    let SmileingNotification = NSNotification(name: "SmileingNotification", object: nil)
+    let NotSmileingNotification = NSNotification(name: "NotSmileingNotification", object: nil)
     
     let emojiLabel : UILabel = UILabel(frame: UIScreen.mainScreen().bounds)
     
@@ -91,8 +95,8 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 println(self.RightEyeClosedCount)
                 
                 //ウインクでレリーズ
-                //通知3回来るとレリーズ
-                if (self.RightEyeClosedCount == 3) {
+                //通知2回来るとレリーズ
+                if (self.RightEyeClosedCount == 2) {
                     println("faceDetected =")
                     println(self.faceDetected)
                     println("isWinking =")
@@ -112,6 +116,34 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
             })
 
             
+           //SmileingNotification通知時の処理
+/*           NSNotificationCenter.defaultCenter().addObserverForName("SmileingNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+               //SmileingNotificationの通知回数カウント
+               self.SmileingCount++   //self.LeftEyeClosedCount + 1
+               println(self.SmileingCount)
+
+               //スマイルでレリーズ
+               //通知1回来るとレリーズ
+               if (self.SmileingCount == 1) {
+                   println("faceDetected =")
+                   println(self.faceDetected)
+                   println("isSmileing =")
+                   println(self.isSmileing)
+
+                   let camera = AppDelegate.sharedCamera
+                   println("takePicture")
+                   camera.takePicture(nil, progressHandler: nil, completionHandler: nil, errorHandler: nil)
+               }
+            })
+
+            //SmileingNotification通知時の処理
+            NSNotificationCenter.defaultCenter().addObserverForName("SmileingNotification", object: nil, queue: NSOperationQueue.mainQueue(), usingBlock: { notification in
+                //SmileingNotificationの通知回数カウントのリセット
+                self.SmileingCount = 0
+                println(self.SmileingCount)
+            })
+*/
+
             //let inquire = camera.inquireHardwareInformation(nil) as NSDictionary
             //let modelname = inquire.objectForKey(OLYCameraHardwareInformationCameraModelNameKey) as? String
             //let version = inquire.objectForKey(OLYCameraHardwareInformationCameraFirmwareVersionKey) as? String
@@ -223,7 +255,7 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 println("lock error: \(error.localizedDescription)")
                 return false
             } else {
-                myDevice.activeVideoMinFrameDuration = CMTimeMake(1, 10)
+                myDevice.activeVideoMinFrameDuration = CMTimeMake(1, 5)
                 myDevice.unlockForConfiguration()
             }
         }
@@ -322,6 +354,30 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 
                     if (feature.hasMouthPosition) {
                         var mouthPosition : CGPoint = feature.mouthPosition
+                    }
+                    
+                    if (feature.hasSmile) {
+                        println("hasSmile")
+                        if (self.onlyFireNotificatonOnStatusChange == true) {
+                            if (self.isSmileing == false) {
+                                self.notificationCenter.postNotification(self.SmileingNotification)
+                            }
+                        } else {
+                            self.notificationCenter.postNotification(self.SmileingNotification)
+                        }
+                        self.isSmileing = true
+                        println("isSmileing = true")
+                    }else {
+                        println("noSmile")
+                        if (self.onlyFireNotificatonOnStatusChange == true) {
+                            if (self.isSmileing == true) {
+                                self.notificationCenter.postNotification(self.NotSmileingNotification)
+                            }
+                        } else {
+                            self.notificationCenter.postNotification(self.NotSmileingNotification)
+                        }
+                        self.isSmileing = false
+                        println("isSmileing = false")
                     }
                     
                     if ((feature.leftEyeClosed == true) || (feature.rightEyeClosed == true)) { //目閉じがある場合
@@ -432,10 +488,12 @@ class LiveView: UIViewController , OLYCameraLiveViewDelegate , OLYCameraRecordin
                 self.isWinking = false
                 self.leftEyeClosed = false
                 self.rightEyeClosed = false
+                self.isSmileing = false
                 println("isBlinking = false")
                 println("isWinking = false")
                 println("leftEyeClosed = false")
                 println("rightEyeClosed = false")
+                println("isSmileing = false")
                 
             }
     }
